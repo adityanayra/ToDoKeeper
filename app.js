@@ -2,6 +2,7 @@ const express = require("express");
 const bodyParser = require("body-parser");
 const mongoose = require("mongoose");
 const { response } = require("express");
+const _ = require("lodash");
 
 const app = express();
 // Setting up templating engine
@@ -65,7 +66,7 @@ const List = mongoose.model("List", customListSchema);
 
 //GET for CUSTOM LIST NAME IN PARARMS 
 app.get("/:customListName", function(req, res){
-    const customListName = req.params.customListName;
+    const customListName = _.capitalize(req.params.customListName);
     
     List.findOne({name: customListName}, function(err, foundList){
         if(!err){
@@ -95,27 +96,47 @@ app.get("/:customListName", function(req, res){
 
 // ADDING A NEW ITEM
 app.post("/", function(req, res){
-    let newItemName = req.body.newItem;
-    console.log(newItemName);
-    const addNew = new Item({
+    const newItemName = req.body.newItem;
+    const listName = req.body.list;
+    // console.log(listName);
+    const item = new Item({
         name: newItemName
     });
-    addNew.save(function(err){
-        if(err){
-            console.log(err);
-        }else console.log("newData inserted successfully!");
-    })
-    res.redirect("/");
+
+    if(listName === "Today"){
+        item.save();
+        res.redirect("/");
+    }
+    else{
+        List.findOne({name: listName}, function(err, foundList){
+            foundList.items.push(item);
+            foundList.save();
+            res.redirect("/"+listName);
+        });
+    }
 });
 
 // FOR DELETING AN ITEM
 app.post("/delete", function(req, res){
-    const deleteId = req.body.checkbox;
-    Item.deleteOne({_id: deleteId}, function(err){
-        if(err) console.log(err);
-        else console.log("element deleted yay!");
-        res.redirect("/"); 
-    });
+    const checkedItemId = req.body.checkbox;
+    const listName = req.body.listName;
+
+    if(listName === "Today"){
+        Item.deleteOne({_id: checkedItemId}, function(err){
+            if(err) console.log(err);
+            else console.log("element deleted yay!");
+            res.redirect("/"); 
+        });
+    }
+    else{
+        List.findOneAndUpdate({name: listName}, {$pull: {items:{_id: checkedItemId}}}, function(err, results){
+            if(err) console.log(err);
+            else{
+                res.redirect("/"+listName);
+            }
+        })
+    }
+    
 });
 
 // PORT 3030 Listening 
