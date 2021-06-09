@@ -22,36 +22,16 @@ const listSchema = new mongoose.Schema({
 //model items
 const Item = mongoose.model("Item", listSchema);
 
-// The next three items are default items of list
-const newItem = new Item({
-    name: "WElcome "
-});
-const newItem1 = new Item({
-    name: "To your list"
-});
-
-const newItem2 = new Item({
-    name: "hit tthat add "
-});
-
-const defaultItems = [newItem, newItem1, newItem2]
+const defaultItems = [];
 
 
-
+//root location
 app.get("/", function(req, res){
     
     Item.find({}, function(err, results){
-        if(results.length === 0){
-            Item.insertMany(defaultItems, function(err){
-                if(err){
-                    console.log(err);
-                }else console.log("successfully inserted into DB");
-            })
-            res.redirect("/");
-            
-        }else{
-            res.render("list.ejs", {listTitle:"Today", addItems: results});
-        }    
+        
+        res.render("list.ejs", {listTitle:"Today", addItems: results});
+          
     });
 });
 
